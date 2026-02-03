@@ -1,66 +1,138 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
-export const useVoice = () => {
+interface UseVoiceReturn {
+  isListening: boolean;
+  transcript: string;
+  interimTranscript: string;
+  startListening: () => void;
+  stopListening: () => void;
+  resetTranscript: () => void;
+  speak: (text: string) => void;
+  isSpeaking: boolean;
+  error: string | null;
+  supported: boolean;
+}
+
+export function useVoice(): UseVoiceReturn {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [supported, setSupported] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [supported, setSupported] = useState(true);
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [recognition, setRecognition] = useState<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      setSupported(true);
-      // @ts-ignore
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recog = new SpeechRecognition();
-      recog.continuous = false;
-      recog.interimResults = false;
-      recog.lang = 'pt-BR';
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      setSupported(false);
+      setError('Reconhecimento de voz não suportado neste navegador. Use Chrome ou Edge.');
+      return;
+    }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recog.onresult = (event: any) => {
-        const text = event.results[0][0].transcript;
-        setTranscript(text);
-        setIsListening(false);
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    recognitionRef.current = new SpeechRecognitionAPI();
+    
+    if (recognitionRef.current) {
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'pt-BR';
+
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+        let interim = '';
+        let final = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            final += transcript;
+          } else {
+            interim += transcript;
+          }
+        }
+
+        setInterimTranscript(interim);
+        if (final) {
+          setTranscript((prev) => prev + ' ' + final.trim());
+          setInterimTranscript('');
+        }
       };
 
-      recog.onerror = () => {
-        setIsListening(false);
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.error('Erro no reconhecimento de voz:', event.error);
+        if (event.error === 'not-allowed') {
+          setError('Permissão de microfone negada.');
+        }
       };
 
-      recog.onend = () => {
-        setIsListening(false);
+      recognitionRef.current.onend = () => {
+        if (isListening) {
+          recognitionRef.current?.start();
+        }
       };
+    }
 
-      setRecognition(recog);
+    return () => {
+      recognitionRef.current?.stop();
+    };
+  }, [isListening]);
+
+  const startListening = useCallback(() => {
+    if (recognitionRef.current && supported) {
+      setError(null);
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  }, [supported]);
+
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      setInterimTranscript('');
     }
   }, []);
 
-  const startListening = useCallback(() => {
-    if (recognition && !isListening) {
-      try {
-        recognition.start();
-        setIsListening(true);
-        setTranscript('');
-      } catch (e) {
-        console.error(e);
+  const resetTranscript = useCallback(() => {
+    setTranscript('');
+    setInterimTranscript('');
+  }, []);
+
+  const speak = useCallback((text: string) => {
+    if ('speechSynthesis' in window) {
+      // Cancelar fala anterior
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      // Tentar encontrar uma voz em português
+      const voices = window.speechSynthesis.getVoices();
+      const ptVoice = voices.find(voice => voice.lang.includes('pt'));
+      if (ptVoice) {
+        utterance.voice = ptVoice;
       }
-    }
-  }, [recognition, isListening]);
 
-  const stopListening = useCallback(() => {
-    if (recognition && isListening) {
-      recognition.stop();
-      setIsListening(false);
-    }
-  }, [recognition, isListening]);
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
 
-  const speak = (text: string) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'pt-BR';
-    window.speechSynthesis.speak(utterance);
+      window.speechSynthesis.speak(utterance);
+    }
+  }, []);
+
+  return {
+    isListening,
+    transcript,
+    interimTranscript,
+    startListening,
+    stopListening,
+    resetTranscript,
+    speak,
+    isSpeaking,
+    error,
+    supported,
   };
-
-  return { isListening, transcript, startListening, stopListening, speak, supported };
-};
+}
