@@ -1,73 +1,59 @@
-# React + TypeScript + Vite
+# SpookyDash 2.0
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicação de Gerenciamento de Tarefas com assistente de voz, construída com React, Vite, TypeScript e Firebase.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologias
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** - Biblioteca UI
+- **Vite** - Build tool
+- **TypeScript** - Tipagem estática
+- **Firebase** - Backend (Auth + Firestore)
+- **Tailwind CSS** - Estilização
+- **Lucide React** - Ícones
+- **Web Speech API** - Reconhecimento e síntese de voz
 
-## React Compiler
+## 📋 Funcionalidades
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- ✅ Autenticação (Email/Senha e Convidadoo)
+- ✅ CRUD de Tarefas
+- ✅ CRUD de Interações
+- ✅ Dashboard com estatísticas
+- 🤖 Assistente de voz com comandos
+- 🎨 Interface dark theme moderna
+- 📱 Design responsivo
 
-## Expanding the ESLint configuration
+## 🛠️ Instalação
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+# Clonar o repositório
+git clone https://github.com/SpookyClaw11/spooky-dash-v2.git
+cd spooky-dash-v2
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# Instalar dependências
+npm install
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Iniciar servidor de desenvolvimento
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🔧 Configuração
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+O projeto já está configurado com as credenciais do Firebase. Para usar seu próprio projeto:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. Crie um projeto no [Firebase Console](https://console.firebase.google.com/)
+2. Ative Authentication e Firestore
+3. Atualize `src/firebase-config.ts` com suas credenciais
+
+## 📱 Comandos de Voz
+
+- **"Criar tarefa: [nome]"** - Cria uma nova tarefa
+- **"Listar tarefas"** - Mostra instruções para ver tarefas
+- **"Ajuda"** - Lista os comandos disponíveis
+
+## 🔒 Segurança
+
+As regras do Firestore estão configuradas para garantir que usuários só acessem seus próprios dados.
+
+## 📝 Licença
+
+MIT
